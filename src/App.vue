@@ -1,19 +1,25 @@
 <template>
   <div>
-    <nav class="bg-gray-800 text-white p-4">
-      <router-link to="/" class="mr-4 hover:underline">Home</router-link>
-      <router-link to="/about" class="hover:underline">About Me</router-link>
-    </nav>
+    <AppHeader />
     <div class="p-6">
       <router-view></router-view>
     </div>
+    <AppFooter />
   </div>
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+import AppHeader from './components/Header.vue'
+import AppFooter from './components/Footer.vue'
+
+export default defineComponent({
   name: 'App',
-};
+  components: {
+    AppHeader,
+    AppFooter
+  }
+})
 </script>
 
 <style>
