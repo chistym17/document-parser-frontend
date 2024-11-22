@@ -1,7 +1,7 @@
 <template>
-  <footer class="footer bg-blue-50 mt-auto">
-    <div class="container mx-auto px-4 py-4 text-center text-gray-600">
-      <p>&copy; {{ currentYear }} DocAnalyzer. All rights reserved.</p>
+  <footer class="bg-gray-100 dark:bg-gray-800 py-4">
+    <div class="container mx-auto text-center text-gray-600 dark:text-gray-300">
+      <p>&copy; {{ new Date().getFullYear() }} Document Analyzer. All rights reserved.</p>
     </div>
   </footer>
 </template>

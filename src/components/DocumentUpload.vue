@@ -54,7 +54,10 @@
 <script setup>
 import { ref } from 'vue'
 import { XIcon } from 'lucide-vue-next'
+import axios from 'axios'
+import { useToast } from 'vue-toastification'
 
+const toast = useToast()
 const emit = defineEmits(['file-analyzed'])
 
 const files = ref([])
@@ -91,15 +94,60 @@ const removeFile = (file) => {
   files.value = files.value.filter(f => f !== file)
 }
 
-const analyzeFiles = () => {
-  // Simulating file analysis
-  setTimeout(() => {
-    const mockResults = {
-      extractedText: 'This is a sample extracted text from the analyzed documents.',
-      insights: ['Insight 1', 'Insight 2', 'Insight 3'],
-      keyPoints: ['Key point 1', 'Key point 2', 'Key point 3'],
-    }
-    emit('file-analyzed', mockResults)
-  }, 2000)
+const analyzeFiles = async () => {
+  try {
+    const formData = new FormData()
+    formData.append('file', files.value[0])
+
+    const response = await axios.post('http://localhost:5000/api/extraction/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        console.log('Upload Progress:', percentCompleted)
+      }
+    })
+
+    toast.success("File uploaded successfully!", {
+      timeout: 3000,
+      position: "top-right",
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+
+    emit('file-analyzed', response.data)
+    files.value = []
+    
+  } catch (error) {
+    console.error('Upload failed:', error)
+    
+    toast.error(error.response?.data?.detail || "Failed to upload file. Please try again.", {
+      timeout: 5000,
+      position: "top-right",
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+  }
 }
 </script>
+
+<style lang="postcss">
+.Vue-Toastification__toast {
+  @apply font-sans;
+}
+
+.Vue-Toastification__toast--success {
+  @apply bg-purple-500;
+}
+
+.Vue-Toastification__toast--error {
+  @apply bg-red-500;
+}
+
+.Vue-Toastification__toast-body {
+  @apply text-sm font-medium;
+}
+</style>
