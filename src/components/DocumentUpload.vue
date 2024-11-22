@@ -44,10 +44,21 @@
     <button
       v-if="files.length > 0"
       @click="analyzeFiles"
-      class="mt-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold py-2 px-6 rounded-full hover:from-blue-600 hover:to-indigo-600 transition duration-300 ease-in-out"
+      :disabled="isProcessing"
+      class="mt-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold py-2 px-6 rounded-full hover:from-blue-600 hover:to-indigo-600 transition duration-300 ease-in-out disabled:opacity-50"
     >
-      Analyze Documents
+      {{ isProcessing ? 'Processing...' : 'Analyze Documents' }}
     </button>
+
+    <div v-if="isProcessing" class="mt-4">
+      <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+        <div 
+          class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+          :style="{ width: `${uploadProgress}%` }"
+        ></div>
+      </div>
+      <p class="text-sm text-gray-500 mt-1 text-center">{{ uploadProgress }}% completed</p>
+    </div>
   </section>
 </template>
 
@@ -62,6 +73,8 @@ const emit = defineEmits(['file-analyzed'])
 
 const files = ref([])
 const isDragging = ref(false)
+const isProcessing = ref(false)
+const uploadProgress = ref(0)
 
 const dragover = (e) => {
   isDragging.value = true
@@ -96,20 +109,26 @@ const removeFile = (file) => {
 
 const analyzeFiles = async () => {
   try {
+    isProcessing.value = true
+    uploadProgress.value = 0
     const formData = new FormData()
-    formData.append('file', files.value[0])
+    files.value.forEach((file, index) => {
+      formData.append('file', file)
+    })
 
-    const response = await axios.post('http://localhost:5000/api/extraction/upload', formData, {
+    const response = await axios.post('http://localhost:5000/api/extraction/upload-and-extract', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
       onUploadProgress: (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        console.log('Upload Progress:', percentCompleted)
+        uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
       }
     })
 
-    toast.success("File uploaded successfully!", {
+    console.log('Success:', response.data)
+    console.log('Extracted text:', response.data.text)
+
+    toast.success("File uploaded and extracted successfully!", {
       timeout: 3000,
       position: "top-right",
       closeOnClick: true,
@@ -123,13 +142,16 @@ const analyzeFiles = async () => {
   } catch (error) {
     console.error('Upload failed:', error)
     
-    toast.error(error.response?.data?.detail || "Failed to upload file. Please try again.", {
+    toast.error(error.response?.data?.detail || "Failed to upload and extract file. Please try again.", {
       timeout: 5000,
       position: "top-right",
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
     })
+  } finally {
+    isProcessing.value = false
+    uploadProgress.value = 0
   }
 }
 </script>
